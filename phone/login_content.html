@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/fonts/font-awesome.min.css">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.icon.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="login_content/css/main.css">
+    </head>
+    <body class="um-vp bc-bg" ontouchstart>
+        <div class="ub ub-ver uinn-a3 ub-fv loginBg ub-img1">
+            <div class="ub ub-ver uinn uinn-at1">
+                <form method="get" action="http://www.appcan.cn">
+                    <div class="umar-a uba bc-border bc-bg">
+                        <div class="ub ub-ac ubb umh5 bc-border ">
+                            <div class=" uinput ub ub-f1">
+                                <div class="uinn fa fa-user sc-text"></div>
+                                <input placeholder="手机/邮箱/用户名" type="text" id="mobile" class="ub-f1">
+                            </div>
+                        </div>
+                        <div class="ub ub-ac umh5 bc-border ">
+                            <div class=" uinput ub ub-f1">
+                                <div class="uinn fa fa-lock sc-text"></div>
+                                <input placeholder="密码" type="password" id="password" class="umw4 ub-f1">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ub ub-ver uinn">
+                        <div class="ub ub-pe uinn-a6 sc-text-active ulev-4">
+                            忘记密码
+                        </div>
+                        <div class="uinn-at1">
+                            <div class="btn ub ub-ac bc-text-head ub-pc bc-btn uc-a1" id="login">
+                                登录
+                            </div>
+                        </div>
+                        <div class="uinn-at2 ub bc-text-head ulev-4" id="regist">
+                            <div class="ub-f1">
+                                立即注册
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit"class="uinvisible"></button>
+                </form>
+
+            </div>
+
+        </div>
+        <script src="js/appcan.js"></script>
+        <script src="js/appcan.control.js"></script>
+        <script src="js/app_config.js"></script>
+    </body>
+    <script>
+        appcan.ready(function() {
+            appcan.initBounce();
+            initLocStorage();
+        })
+
+        appcan.button("#login", "ani-act", function() {
+            login();
+        });
+
+        //初始化本地缓存
+        function initLocStorage() {
+            var mobile = appcan.locStorage.val('mobile') || '13788888810';
+            var password = appcan.locStorage.val('password') || 'password_10';
+
+            if (mobile != "" && mobile != null && password != "" && password != null) {
+                $('#mobile').val(mobile);
+                $('#password').val(password);
+            } else {
+                $('#mobile').val("");
+                $('#password').val("");
+            }
+        }
+
+        //初始化
+        function login() {
+
+            var mobile = $('#mobile').val();
+            var password = $('#password').val();
+            if (mobile == "" || mobile.length == 0) {
+                appcan.window.openToast("请输入用户名！", 2000, 5);
+                return;
+            }
+            if (password == "" || password.length == 0) {
+                appcan.window.openToast("请输入密码！", 2000, 5);
+                return;
+            }
+            //缓存到本地
+            appcan.locStorage.setVal('mobile', mobile);
+            appcan.locStorage.setVal('password', password);
+
+            if (mobile != null && mobile != "" && password != null && password != "") {
+                appcan.request.ajax({
+                    url : api.login + "?mobile=" + mobile + "&password=" + password,
+                    type : 'post',
+                    dataType : "json",
+                    //提交的数据
+                    beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                    success : function(ret, status, xhr) {
+                        uexWindow.closeToast();
+                        if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                            appcan.locStorage.setVal("userInfo", ret.data);
+                            appcan.window.open("colleague_cycle_list", "colleague_cycle_list.html", 5);
+                        } else {
+                            appcan.window.openToast(ret.message, 2000, 5);
+                        }
+                    },
+                    error : function(xhr, status, errMessage) {
+                        uexWindow.closeToast();
+                        appcan.window.openToast("请求错误！", 2000, 5);
+                    }
+                });
+            } else {
+                appcan.window.open("login", "login.html", 5);
+            }
+        }
+
+        //注册
+        appcan.button("#regist", "btn-act", function() {
+            appcan.window.open("verification_code", "verification_code.html", 5);
+        })
+    </script>
+</html>

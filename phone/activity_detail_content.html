@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/fonts/font-awesome.min.css">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.icon.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="activity_detail_content/css/main.css">
+    </head>
+    <body class="um-vp bc-bg" ontouchstart>
+        <div class="ub ub-ver">
+            <div class="ub-fh umw-slider res-slider ub-img1"></div>
+        </div>
+        <div class="ub ub-ver" id="detail">
+
+        </div>
+        <div class="callbtnbox">
+            <div class="btn ub ub-ac bc-text-head ub-pc bc-btn"  id="btn1">
+                报名
+            </div>
+        </div>
+
+        <script src="js/appcan.js"></script>
+        <script src="js/appcan.control.js"></script>
+        <script src="js/app_config.js"></script>
+        <script src="js/app_common.js"></script>
+    </body>
+    <script>
+        appcan.ready(function() {
+            appcan.initBounce();
+            getActivity();
+        });
+
+        //初始化活动数据
+        function getActivity() {
+            appcan.request.ajax({
+                url : api.activityDetail + "?userId=" + userInfo.id + "&activityId=17",
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        initActivity(ret.data);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+        }
+
+        function initActivity(data) {
+            data = data || {};
+            var str = "";
+            var label = ["标题", "俱乐部", "人数", "时间", "地点", "说明"];
+            var value = [data.title, data.clubName, data.count, (data.startTime + ' - ' + data.endTime), data.address, data.remark];
+            if (label.length == value.length) {
+                var str = "";
+                for (var i = 0; i < label.length; i++) {
+                    str += '<div class="list">';
+                    str += '<span class="ulev-1">' + label[i] + '：' + value[i] + '</span>';
+                    str += '</div>';
+                }
+                $("#detail").html(str);
+            } else {
+                alert("数据错误！");
+            }
+        }
+    </script>
+</html>

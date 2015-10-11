@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/fonts/font-awesome.min.css">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.icon.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="activity_list_content/css/main.css">
+    </head>
+    <body class="um-vp bc-bg" ontouchstart>
+        <div class="umar-a" id="">
+
+            <div class="uba b-gra3 uc-a1 c-wh ub uinn-a7 ub-ac umar-at1">
+                <div class="ub-f1 uinn">
+                    <p>
+                        欢迎来到羽毛球俱乐部！
+                    </p>
+                </div>
+            </div>
+
+            <div id="goodsList" class="ub-f1 tx-l"></div>
+
+        </div>
+        <script src="js/appcan.js"></script>
+        <script src="js/appcan.control.js"></script>
+        <script src="js/appcan.listview.js"></script>
+        <script src="js/appcan.tab.js"></script>
+        <script src="js/app_config.js"></script>
+        <script src="js/app_common.js"></script>
+    </body>
+    <script>
+        appcan.ready(function() {
+            appcan.initBounce();
+            getActivityList();
+        })
+        function getActivityList() {
+            appcan.request.ajax({
+                url : api.activityList + "?userId=" + userInfo.id,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        initActivityList(ret.data);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+        }
+
+        function initActivityList(data) {
+            var arrData = data || [];
+            var listData = [];
+            for (var i = 0,
+                len = arrData.length; i < len; i++) {
+                var list = {
+                    title : arrData[i].title,
+                    icon : arrData[i].xxx,
+                    describe : '<div class="ub ub-ae">时间：<div class="sc-text-warn ">' + arrData[i].startTime + ' - ' + arrData[i].endTime + '</div></div>' + '<div class="ub ub-ae">地点：<div class="sc-text-warn ">' + arrData[i].address + '</div></div>' + '<div class="ub ub-ae">人气：<div class="sc-text-warn ">' + arrData[i].count + '</div></div>'
+                }
+                listData.push(list);
+            }
+
+            var lv1 = appcan.listview({
+                selector : "#goodsList",
+                type : "thickLine",
+                hasIcon : true,
+                hasAngle : true,
+                hasSubTitle : false,
+                multiLine : 1,
+                hasCheckbox : false,
+                align : 'left'
+            });
+            lv1.set(listData);
+            lv1.on('click', function(ele, context, obj, subobj) {
+                appcan.window.open("activity_detail", "activity_detail.html", 5);
+            })
+        }
+
+    </script>
+</html>

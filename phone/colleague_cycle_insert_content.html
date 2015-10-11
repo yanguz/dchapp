@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/fonts/font-awesome.min.css">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.icon.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="colleague_cycle_insert_content/css/main.css">
+    </head>
+    <body class="um-vp bc-bg" ontouchstart>
+        <div class="uinn-a1">
+            <div class="umar-t-ec2">
+                <div class="c-wh uinn-ec1 uh-ect">
+                    <div class=" uinput ub ub-f1">
+                        <textarea id="snsmessageContent" placeholder="请输入您想发表的内容！" type="text" class="ub-f1"></textarea>
+                    </div>
+                    <div class="t-wh-c7 ulev-2 ub-pe ub-ae tx-r">
+                        最多输入100个字
+                    </div>
+                </div>
+            </div>
+            <div id="piclist" ></div>
+            <div class="ub umar-t-ec3">
+                <div class="ub-img uwh-bg imgBg umar-r-ect" id="imageSelect"></div>
+            </div>
+        </div>
+
+        <div class="ub ub-ver uinn">
+            <div class="uinn-at1">
+                <div class="btn ub ub-ac bc-text-head ub-pc bc-btn uc-a1" id="publish">
+                    发布
+                </div>
+            </div>
+        </div>
+
+        <script src="js/appcan.js"></script>
+        <script src="js/appcan.control.js"></script>
+        <script src="js/appcan.listview.js"></script>
+        <script src="js/app_config.js"></script>
+        <script src="js/app_common.js"></script>
+    </body>
+    <script>
+        appcan.ready(function() {
+            init();
+            appcan.initBounce();
+            // 成功选取图片后的回调方法, data:(String类型) 必选  选择完成后返回的路径
+            uexImageBrowser.cbPick = imagePickCallback;
+            //拍照的回调方法, 拍照成功后图片的保存路径
+            uexCamera.cbOpen = imagePickCallback;
+        });
+
+        //初始化，数据重置
+        function init() {
+            $("#piclist").html("");
+            $("#snsmessageContent").val("");
+        }
+
+        //照片选择回调函数
+        var imagePickCallback = function(opCode, dataType, data) {
+            if (data.indexOf('[') >= 0 || data.indexOf(',') > 0) {
+                data = data.replace('[', '').replace(']', '');
+                var arr = data.split(',');
+                var len = arr.length;
+                for (var i = 0; i < len; i++) {
+                    $('<img  src="' + arr[i] + '" style="width: 6em; height: 6em;" class="uinn" >').appendTo($('#piclist'));
+                }
+            } else {
+                $('<img  src="' + data + '" style="width: 6em; height: 6em;" class="uinn" >').appendTo($('#piclist'));
+            }
+        };
+
+        appcan.button("#publish ", "ani-act ", function() {
+            publish();
+        });
+
+        //发布
+        function publish() {
+            var snsmessageContent = $("#snsmessageContent").val();
+            if (!snsmessageContent || snsmessageContent == null || snsmessageContent == "") {
+                appcan.window.openToast("请输入内容！", 2000, 5);
+                return false;
+            }
+
+            var resourceRefId = "snsmessage_" + new Date().getTime();
+            var uploadImageUrl = api.uploadSnsmessageImage + "?resourceRefId=" + resourceRefId;
+
+            uexUploaderMgr.onStatus = function(opCode, fileSize, percent, serverPath, status) {
+                switch (status) {
+                case 0:
+                    if (fileSize > maxSize) {
+                        uexUploaderMgr.closeUploader(opCode);
+                        uexWindow.toast(0, 5, "亲，照片必须小于2M额!", 1000);
+                    } else {
+                        uexWindow.toast(1, 5, "上传进度：" + percent + "%", 0);
+                    }
+                    break;
+                case 1:
+                    uexWindow.closeToast();
+                    //关闭上传对象
+                    uexUploaderMgr.closeUploader(opCode);
+                    //dialog(userAvatarSrc);
+                    break;
+                case 2:
+                    //alert("上传失败");
+                    uexWindow.closeToast()
+                    uexWindow.toast(0, 5, "亲，上传失败!", 1500);
+                    uexUploaderMgr.closeUploader(opCode);
+                    break;
+                }
+            }
+            $("#piclist img").each(function(idx) {
+                uexUploaderMgr.createUploader(idx, api.uploadSnsmessageImage + "?resourceRefId=" + resourceRefId);
+                uexUploaderMgr.uploadFile(idx, $(this).attr("src"), "file", 3);
+                uexUploaderMgr.closeUploader(idx);
+            });
+
+            var url = api.publishSnsmessage + "?userId=" + userInfo.id + "&content=" + snsmessageContent + "&resourceRefId=" + resourceRefId;
+            appcan.request.ajax({
+                url : url,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        appcan.window.open("colleague_cycle_list", "colleague_cycle_list.html", 5);
+                    } else {
+                        appcan.window.openToast(ret.message, 2000, 5);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+                    uexWindow.closeToast();
+                    appcan.window.openToast("请求错误！", 2000, 5);
+                }
+            });
+
+        }
+
+        //打开图片或相机
+        appcan.button("#imageSelect ", "ani-act ", function() {
+            //弹出菜单列表的回调方法,data: (Number类型) 必选 返回的数据，用户点击的按钮索引。
+            uexWindow.cbActionSheet = function(opid, type, data) {
+                switch(Number(data)) {
+                case 0: {
+                    var imgLen = $("#piclist img").length;
+                    // 从相册中选取若干张图片，并返回路径
+                    uexImageBrowser.pickMulti(6 - imgLen);
+                    break;
+                }
+                case 1: {
+                    //打开相机
+                    uexCamera.open(0, 50);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            uexWindow.actionSheet("请选择", '取消', ['本地照片', '拍摄照片']);
+        });
+
+        //预览图片
+        appcan.button("#piclist", "btn-act", function(a, b) {
+            if (a.currentTarget && a.currentTarget.childNodes) {
+                var nodes = a.currentTarget.childNodes;
+                var array = new Array();
+                for (var i = 0; i < nodes.length; i++) {
+                    array[i] = nodes[i].src;
+                }
+                uexImageBrowser.open(array);
+            }
+        });
+
+    </script>
+</html>

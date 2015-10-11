@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/fonts/font-awesome.min.css">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.icon.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="colleague_cycle_list_content/css/main.css">
+    </head>
+    <body class="um-vp bc-bg" ontouchstart>
+
+        <div class="ub ub-ver c-wh" id="userDiv">
+            <div class="ub-img7 ub-fh uh-per1" id="backgroundImage"></div>
+            <div class="ub uinn-a7  b-gra-cf umar-per2">
+                <div class="uba bc-border uwh-esh2 c-wh ub ub-ac ub-pc">
+                    <div class="ub-img uwh-per2" id="userHeadImage"></div>
+                </div>
+                <div class="ub ub-ver ub-f1">
+                    <div class="ulev-app2 uinn-esh bc-text-head" id="userName"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ub ub-ver" id="content"></div>
+
+        <div id = 'comment' style='display:none;bottom: 0;left: 0;right:0;position: fixed;'>
+            <div class="ub ub-ver ub-fh bc-bg " >
+                <div class="uh bc-text-head ub bc-head">
+                    <div class="nav-btn cancel" id="nav-left">
+                        <div class="ub-img icon-close umw2 umh4" ></div>
+                    </div>
+                    <div class=" tx-c bc-text ub-f1 ulev-app1"></div>
+                    <div class="nav-btn save" id="nav-right">
+                        <div class="ub-img icon-disk umw2 umh4" ></div>
+                    </div>
+                </div>
+                <div class="uinn">
+                    <div class="uba bc-border uinput ub ub-f1">
+                        <textarea id="commentContent" placeholder="写评论" type="text" maxLength='30' replyType='1' class="ub-f1"style="margin:1em;min-height:8em;font-size:1em;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="js/appcan.js"></script>
+        <script src="js/appcan.control.js"></script>
+        <script src="js/app_config.js"></script>
+        <script src="js/app_common.js"></script>
+    </body>
+    <script>
+        appcan.ready(function() {
+            init();
+            appcan.initBounce();
+            getSnsmessageList();
+            initBind();
+        });
+
+        //初始化
+        function init() {
+            $('#content').html("");
+            $("#backgroundImage").css("background-image", "url('" + (server + userInfo.backgroundImgUrl) + "')");
+            $("#userHeadImage").css("background-image", "url('" + (server + userInfo.headImageUrl) + "')");
+            $("#userName").html(userInfo.nickName);
+        }
+
+        //初始化朋友圈数据
+        function getSnsmessageList() {
+            appcan.request.ajax({
+                url : api.snsmessageList + "?userId=" + userInfo.id,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        initSnsmessageList(ret.data);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+        }
+
+        function initSnsmessageList(data) {
+            var arrData = data || [];
+            var tmpl = '<ul ontouchstart="appcan.touch(\'btn-act\')" class="ubb ub bc-border lis">';
+            tmpl += '<li class="uh-app3 uw-app3 uc-a-app2 ub-img mar-ar1" style="background-image:url(' + server + '${userHeadImageUrl});"></li>';
+            tmpl += '<li class="ub-f1 ub ub-ver">';
+            tmpl += '  <div class="ub ub-f1 ub-ac">';
+            tmpl += '      <div class="ut-s ulev-4 sc-text-active ">${userNickName}</div>';
+            tmpl += '  </div>';
+            tmpl += '  <div class="ub umar-t">';
+            tmpl += '      <div class="ub-f1 ub t-gra-comm ulev-2">';
+            tmpl += '         <div class="umar-r-comm">${createTime}</div>';
+            tmpl += '         <div>${userId}</div>';
+            tmpl += '     </div>';
+            tmpl += '     <div class="ub ub-pe tx-r">';
+            tmpl += '         <div class="t-gra-comm ufm1 ulev-2 umar-r sc-text-active" onclick="doAction(\'${id}\',\'${userId}\',\'${userNickName}\')">赞/评论</div>';
+            tmpl += '     </div>';
+            tmpl += '  </div>';
+            tmpl += '  <div class="t-bla ulev-4 ub-f1 umar-t">${content}</div><br/>';
+            tmpl += '  <div>${cb:snsmessageImageUrlList}</div><div>${cb:userSnsmessagePraiseList}</div><br/>';
+            tmpl += ' ${cb:userSnsmessageCommentList}';
+            tmpl += '</li>';
+            tmpl += '</ul>'
+            var s = appcan.tempRenderList(tmpl, arrData, appcan.getObjLength(arrData), tmpleCb);
+            var d = document.createElement('DIV');
+            d.innerHTML = s;
+            $('#content')[0].appendChild(d);
+        }
+
+        //a json数据集  b 参数key
+        function tmpleCb(a, b) {
+            var str = '';
+            switch(b[1]) {
+            case "userSnsmessagePraiseList":
+                var arr1 = a['userSnsmessagePraiseList'];
+                str += '<div class="t-gra-comm ufm1 ulev-2 umar-r">点赞数：<span id="' + a["id"] + '_praiseCount">' + arr1.length + '</span></div>';
+                str += '<div class="uba bc-border sc-bg-active  uc-a1 umar-at1" id="' + a["id"] + '_praiseDiv">'
+                str += '    <div class="ub ub-pl tx-r">';
+                if (arr1 && arr1.length > 0) {
+                    for (var i = 0; i < arr1.length; i++) {
+                        str += getPraiseTpl(a["id"], arr1[i].userId, arr1[i].userNickName);
+                    }
+                }
+                str += '    </div>'
+                str += '</div>';
+
+                return str;
+            case "userSnsmessageCommentList":
+                var arr1 = a['userSnsmessageCommentList'];
+
+                str += '<div class="t-gra-comm ufm1 ulev-2 umar-r">评论数：<span id="' + a["id"] + '_commentCount">' + arr1.length + '</span></div>';
+                str += '<div class="uba bc-border sc-bg-active  uc-a1 umar-at1">';
+                str += '    <div class="uinn-comm ulev-1" id="' + a["id"] + '_commentDiv">';
+                if (arr1 && arr1.length > 0) {
+                    for (var i = 0; i < arr1.length; i++) {
+                        str += getCommentTpl(a["id"], arr1[i].userId, arr1[i].userNickName, arr1[i].commentToUserId, arr1[i].commentToUserNickName, arr1[i].commentContent);
+                    }
+                } else {
+                    str += '  <span class="t-gra2-comm line-hei-com">&nbsp;</span>';
+                }
+                str += '    </div>'
+                str += '</div>';
+
+                return str;
+            case "snsmessageImageUrlList":
+                var arr1 = a['snsmessageImageUrlList'];
+                if (arr1 && arr1.length > 0) {
+                    str += '<div id="' + a["id"] + '_imageDiv" onclick=showImages(\"' + a["id"] + '_imageDiv\")>';
+                    for (var i = 0; i < arr1.length; i++) {
+                        str += '<img style="width: 6em; height: 6em;padding:0.2em 0.2em 0.2em 0.2em"  src="' + server + arr1[i] + '"/>';
+                    }
+                    str += '</div>';
+                }
+                return str;
+            }
+
+        }
+
+        //点赞模板
+        function getPraiseTpl(snsmessageId, userId, userNickName) {
+            var str = "";
+            str += '<span class="sc-text-active ulev-4 line-hei-com" id="' + (snsmessageId + "_" + userId) + '">&nbsp;&nbsp;';
+            str += userNickName;
+            str += '&nbsp;&nbsp;</span>';
+            return str;
+        }
+
+        //评论模板
+        function getCommentTpl(snsmessageId, userId, userNickName, commentToUserId, commentToUserNickName, commentContent) {
+            var str = "";
+            str += ' <span class="sc-text-active line-hei-com" onclick=doComment("' + snsmessageId + '","' + userId + '","' + userNickName + '")>' + userNickName + '</span>';
+            if (commentToUserNickName) {
+                str += " 回复 ";
+                str += '  <span class="sc-text-active line-hei-com">' + commentToUserNickName + '</span>' + " 说：";
+            }
+            str += '  <span class="t-gra2-comm line-hei-com">' + commentContent + '</span></br>';
+
+            return str;
+        }
+
+        //当前点赞信息
+        var _praiseInfo = {
+            userId : null,
+            snsmessageId : null
+        }
+
+        //当前评论信息
+        var _commentInfo = {
+            userId : null,
+            snsmessageId : null,
+            comment : null,
+            commentToId : null,
+            commentToUserNickName : null
+        };
+
+        //评论或点赞操作
+        function doAction(snsmessageId, toUserId, toUserName) {
+            appcan.window.alert({
+                title : "提示",
+                content : "",
+                buttons : ['赞', '评论', '取消'],
+                callback : function(err, data, dataType, optId) {
+                    data = data * 1;
+                    switch(data) {
+                    case 0 :
+                        _praiseInfo.snsmessageId = snsmessageId;
+                        _praiseInfo.userId = userInfo.id;
+                        praise();
+                        break;
+                    case 1 :
+                        _commentInfo.userId = userInfo.id;
+                        _commentInfo.snsmessageId = snsmessageId;
+                        _commentInfo.commentToId = toUserId;
+                        _commentInfo.commentToUserNickName = toUserName;
+                        $('#comment').css('display', 'block');
+                        break;
+                    case 2 :
+                        break;
+                    }
+                }
+            });
+
+        };
+
+        //评论操作
+        function doComment(snsmessageId, toUserId, toUserName) {
+            _commentInfo.userId = userInfo.id;
+            _commentInfo.snsmessageId = snsmessageId;
+            _commentInfo.commentToId = toUserId;
+            _commentInfo.commentToUserNickName = toUserName;
+            $('#comment').css('display', 'block');
+        };
+
+        //评论
+        function comment() {
+            var commentVal = $("#commentContent").val();
+            _commentInfo.comment = commentVal;
+            var url = api.commentSnsmessage + "?userId=" + _commentInfo.userId + "&snsmessageId=" + _commentInfo.snsmessageId + "&comment=" + _commentInfo.comment + "&commentToId=" + _commentInfo.commentToId;
+            appcan.request.ajax({
+                url : url,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据提交中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        var str = getCommentTpl(_commentInfo.snsmessageId, _commentInfo.userId, userInfo.nickName, _commentInfo.commentToId, _commentInfo.commentToUserNickName, _commentInfo.comment);
+                        $("#" + _commentInfo.snsmessageId + "_commentDiv").append(str);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+
+        }
+
+        //点赞
+        function praise() {
+            var id = _praiseInfo.snsmessageId + "_" + _praiseInfo.userId;
+            if ($("#" + id).text()) {
+                appcan.window.openToast("您已经点过赞了！", 2000, 5);
+                return;
+            }
+
+            var url = api.praiseSnsmessage + "?userId=" + _praiseInfo.userId + "&snsmessageId=" + _praiseInfo.snsmessageId;
+            appcan.request.ajax({
+                url : url,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据提交中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        var praiseCount = $("#" + _praiseInfo.snsmessageId + "_praiseCount").html() * 1;
+                        $("#" + _praiseInfo.snsmessageId + "_praiseCount").html(praiseCount + 1);
+                        var str = getPraiseTpl(_praiseInfo.snsmessageId, _praiseInfo.userId, userInfo.nickName);
+                        $("#" + _praiseInfo.snsmessageId + "_praiseDiv").append(str);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+
+        }
+
+        //预览图片
+        function showImages(divId) {
+            var array = new Array();
+            $("#" + divId + " img").each(function(i) {
+                array[i] = $(this).attr("src");
+            });
+            debugger;
+            uexImageBrowser.open(array);
+        }
+
+        //评论
+        appcan.button("#nav-right", "btn-act", function() {
+            comment();
+            $("#commentContent").val("");
+            $('#comment').css('display', 'none');
+        });
+
+        appcan.button("#userDiv", "btn-act", function(a, b) {
+            appcan.window.open("home", "home.html", 5);
+        });
+
+    </script>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="stylesheet" href="css/ui-box.css">
+        <link rel="stylesheet" href="css/ui-base.css">
+        <link rel="stylesheet" href="css/ui-color.css">
+        <link rel="stylesheet" href="css/appcan.control.css">
+        <link rel="stylesheet" href="club_content/css/main.css">
+
+    </head>
+
+    <body class="um-vp bc-bg ub-ver" ontouchstart>
+        <div class="ub ub-ver">
+            <div id="slider" class="slider"></div>
+            <div class="ub ub-ver" id="content"></div>
+        </div>
+
+    </body>
+    <script src="js/appcan.js"></script>
+    <script src="js/appcan.control.js"></script>
+    <script src="js/appcan.slider.js"></script>
+    <script src="js/app_config.js"></script>
+    <script src="js/app_common.js"></script>
+    <script>
+        appcan.ready(function() {
+            appcan.initBounce();
+            getClubList();
+        });
+
+        //初始化俱乐部
+        function getClubList() {
+            appcan.request.ajax({
+                url : api.clubList + "?userId=" + userInfo.id,
+                type : 'post',
+                dataType : "json",
+                //提交的数据
+                beforeSend : uexWindow.toast(1, 5, " 数据获取中...", 0),
+                success : function(ret, status, xhr) {
+                    uexWindow.closeToast();
+                    if ( xhr = 200 && status == 'success' && ret.resultCode == 1) {
+                        initClubList(ret.data);
+                    }
+                },
+                error : function(xhr, status, errMessage) {
+
+                }
+            });
+        }
+
+        function initClubList(data) {
+            var array = data || [];
+            var dom = "";
+            for (var i = 0; i < array.length; i++) {
+                if (i % 2 == 0) {
+                    dom += '<div class="ub umar-at1">';
+                }
+                dom += '<div class="ub-f1 ub ub-ver ub-ac" name="club" id="' + array[i].id + '">';
+                dom += '<div class="uc-a-squ1 uwh-squ1 c-org1-squ ub ub-ac ub-pc">'
+                dom += '<div class="uc-a-squ1 uwh-squ1"><img src="' + (server + array[i].iconUrl) + '" style="width: 6em; height: 6em;"/></div>';
+                dom += '</div>'
+                dom += '<div class="umar-at1 t-gra7 tx-c ulev-squ">'
+                dom += array[i].name;
+                dom += '</div>';
+                dom += '</div>';
+                if (i % 2 == 1) {
+                    dom += '</div>';
+                }
+            }
+            $("#content").append(dom);
+
+            appcan.button("[name='club']", "btn-act", function() {
+                appcan.window.open("activity_list", "activity_list.html", 5);
+            })
+        }
+
+        var slider = appcan.slider({
+            selector : '#slider',
+            aspectRatio : 6 / 16,
+            hasLabel : false,
+            index : 0
+        });
+
+        slider.set([{
+            img : "images/1.png",
+            label : ""
+        }, {
+            img : "images/2.png",
+            label : ""
+        }, {
+            img : "images/3.png",
+            label : ""
+        }, {
+            img : "images/4.png",
+            label : ""
+        }]);
+
+        slider.on("clickItem", function(index, data) {
+        });
+
+    </script>
+</html>
